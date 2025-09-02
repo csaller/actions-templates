@@ -1,0 +1,34 @@
+name: Reusable Docker build and push
+
+on:
+  workflow_call:
+    inputs:
+      repo_name:
+        required: true
+        type: string
+
+jobs:
+  push:
+    name: "Build and push app"
+    runs-on: ubuntu-latest
+    env:
+      INSTANCE_FQDN: "ghcr.io"
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.INSTANCE_FQDN }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        env:
+          REGISTRY_URL: ${{ env.INSTANCE_FQDN }}/${{ inputs.repo_name }}
+        with:
+          push: true
+          tags: |
+            ${{ env.REGISTRY_URL }}:latest
+            ${{ env.REGISTRY_URL }}:${{ github.sha }}
